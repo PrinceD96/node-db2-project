@@ -1,9 +1,11 @@
 const express = require("express");
 
 const db = require("../../data/db-config");
+const { validateId, validateCar } = require("../middleware/middleware");
 
 const router = express.Router();
 
+// Endpoints
 router.get("/", (req, res) => {
 	db("cars")
 		.then((cars) => res.status(200).json(cars))
@@ -12,44 +14,31 @@ router.get("/", (req, res) => {
 		);
 });
 
-router.get("/:id", (req, res) => {
+router.get("/:id", validateId(db, "cars"), (req, res) => {
+	res.status(200).json(req.response);
+});
+
+router.post("/", validateCar, (req, res) => {
+	db("cars")
+		.insert(req.response)
+		.then((car) => res.status(201).json(car));
+});
+
+router.put("/:id", validateId(db, "cars"), validateCar, (req, res) => {
 	const { id } = req.params;
+	const updatedCar = req.body;
 
 	db("cars")
 		.where({ id })
-		.first()
-		.then((car) =>
-			car
-				? res.status(200).json(car)
-				: res.status(404).json({ message: `Car with id ${id} not found` })
+		.update(updatedCar)
+		.then((count) =>
+			count
+				? res.status(200).json({ message: "Car updated successfully" })
+				: res.status(400).json({ message: `Error updating car with id ${id}` })
 		)
 		.catch((error) =>
-			res.status(500).json({ message: "Error retrieving car", error })
+			res.status(500).json({ message: "Internal error", error })
 		);
-});
-
-router.post("/", (req, res) => {
-	const car = req.body;
-
-	JSON.stringify(car) === "{}"
-		? res.status(400).json({ message: "missing car data" })
-		: !car.VIN || !car.make || !car.model || !car.mileage
-		? res.status(400).json({
-				message: `missing required ${
-					!car.VIN
-						? "VIN"
-						: !car.make
-						? "make"
-						: !car.model
-						? "model"
-						: !car.mileage
-						? "mileage"
-						: null
-				} field`
-		  })
-		: db("cars")
-				.insert(car)
-				.then((car) => res.status(201).json(car));
 });
 
 module.exports = router;
