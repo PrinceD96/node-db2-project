@@ -34,10 +34,30 @@ router.put("/:id", validateId(db, "cars"), validateCar, (req, res) => {
 		.then((count) =>
 			count
 				? res.status(200).json({ message: "Car updated successfully" })
-				: res.status(400).json({ message: `Error updating car with id ${id}` })
+				: res
+						.status(400)
+						.json({ message: `Could not update car with id ${id}` })
 		)
 		.catch((error) =>
-			res.status(500).json({ message: "Internal error", error })
+			res.status(500).json({ message: "Error updating the car", error })
+		);
+});
+
+router.delete("/:id", validateId(db, "cars"), (req, res) => {
+	const { id } = req.params;
+
+	db("cars")
+		.where({ id })
+		.del()
+		.then((count) =>
+			count
+				? res.status(200).json({ message: "Car deleted successfully" })
+				: res
+						.status(400)
+						.json({ message: `Could not delete car with id ${id}` })
+		)
+		.catch((error) =>
+			res.status(500).json({ message: "Error deleting the car", error })
 		);
 });
 
