@@ -1,9 +1,11 @@
 const express = require("express");
 const helmet = require("helmet");
 
+const { logger } = require("./middleware/middleware");
 const server = express();
 
 server.use(helmet());
+server.use(logger);
 server.use(express.json());
 
 // Testing
